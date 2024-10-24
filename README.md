@@ -1,26 +1,14 @@
 # PyEuler1D
-Description
 
-This project implements three numerical schemes for solving hyperbolic PDEs in computational fluid dynamics (CFD):
+This project implements numerical schemes for solving the Euler equations in computational fluid dynamics (CFD):
 
     Beam-Warming Scheme: Second-order implicit method.
     MacCormack Scheme: Explicit predictor-corrector method.
     Lax-Wendroff Scheme: Second-order explicit method.
 
-Currently, the solver focuses on the Sod shock tube problem.
-Features:
+The solver supports various linear solvers:
 
-    Modular linear solvers: Jacobi iteration and direct matrix inversion.
-    Support for boundary conditions like supersonic inlet/outlet.
+    Jacobi Method
+    Classical Matrix Inversion
 
-Installation
-
-Install required packages:
-
-bash
-
-pip install -r requirements.txt
-
-Running the Solver
-
-Select your numerical scheme and linear solver, then call iterate to solve the Sod shock tube problem.
+Currently, the solver is applied to the Sod shock tube problem.
