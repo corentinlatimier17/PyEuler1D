@@ -145,6 +145,9 @@ class BeamWarming:
             Al = computeJacobianMatrix(Q, i-1)
             Ar = computeJacobianMatrix(Q, i+1)
 
+            # Get Source Term
+            Scell = S.get_SourceTermCell(i)
+
             # Get states
             Qcell = Q.get_QCell(i)
             Qr = Q.get_QCell(i+1)
@@ -167,9 +170,9 @@ class BeamWarming:
             if idx > 1 and idx < num_inner_cells - 2:
                 Qrr = Q.get_QCell(i+2)
                 Qll = Q.get_QCell(i-2)
-                RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) - self.epsE * (Qll - 4*Ql + 6*Qcell - 4*Qr + Qrr)
+                RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) - self.epsE * (Qll - 4*Ql + 6*Qcell - 4*Qr + Qrr) + deltaT*Scell
             else:  # No dissipation at boundaries
-                RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) -self.epsE*(Ql + Qr-2*Qcell)
+                RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) -self.epsE*(Ql + Qr-2*Qcell) + deltaT*Scell
 
             RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
 

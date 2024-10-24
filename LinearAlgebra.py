@@ -22,12 +22,12 @@ class JacobiSolver:
             # Check for convergence (using infinity norm)
             if np.linalg.norm(x_new - x_old, ord=np.inf) < self.tol:
                 print(f'Converged after {iteration+1} iterations')
-                return x_new
+                return x_new[:, 0]
             
             x_old = x_new.copy()
 
         print(f'Did not converge after {self.max_iter} iterations')
-        return x_new
+        return x_new[:,0]
 
 class DirectSolver:
     def __init__(self):
