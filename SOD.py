@@ -11,7 +11,7 @@ from Solver import *
 from LinearAlgebra import *
 
 ################################### MESH #########################################
-Ncells = 100
+Ncells = 500
 xmin = 0 
 xmax = 1000
 
@@ -40,13 +40,13 @@ BC_RIGHT = BoundaryCondition(type="O_oder_extrapolation")
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
-SCHEME = BeamWarming(0.05, 2*0.1)
+SCHEME = BeamWarmingTEST(0.125, 2.5*0.125)
 
 ################################# Linear Solver #######################################
 LINEAR_SOLVER = DirectSolver()
 
 ################################ Solver ################################################
-CFL = 0.1
+CFL = 1
 maxTime = 250
 files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt']
 solver = TransientSolver(maxTime, CFL, MESH, Q, E, S, BCS, SCHEME, files, LINEAR_SOLVER)
