@@ -132,6 +132,7 @@ class BeamWarming:
         self.epsI = epsI
 
     def iterate(self, Q, E, S, MESH, deltaT, BCS, LINEAR_SOLVER , num_iter):
+    
         
         num_inner_cells = len(MESH.innerCellsIndexes)
         MATRIX_BM = np.zeros((3*num_inner_cells, 3*num_inner_cells), dtype=np.float64) # Reduced block tridiagonal matrix
@@ -185,7 +186,7 @@ class BeamWarming:
                 # Right block
                 MATRIX_BM[3*idx:3*(idx+1), 3*(idx+1):3*(idx+2)] += 1/(MESH.dx)*Ar
                 # Right hand side 
-                RHS_BM_cell = -deltaT/(MESH.dx)*(Er-Ecell) + deltaT*Scell
+                RHS_BM_cell = -deltaT/(MESH.dx)*(Er-Ecell) + deltaT*Scell 
                 RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
 
             elif idx==num_inner_cells-1:

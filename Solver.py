@@ -25,7 +25,7 @@ class TransientSolver:
             self.CurrentTime += deltaT
             self.num_iter +=1
             print(f"Iteration n° {self.num_iter}, t = {self.CurrentTime}")
-        plt.plot(self.mesh.coordinates[self.mesh.innerCellsIndexes] , self.Q.rhouA[self.mesh.innerCellsIndexes])
+        plt.plot(self.mesh.coordinates[self.mesh.innerCellsIndexes] , self.Q.rhoA[self.mesh.innerCellsIndexes])
         plt.show()
     
     def computeDeltaT(self):

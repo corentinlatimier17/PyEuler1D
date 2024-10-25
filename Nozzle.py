@@ -11,7 +11,7 @@ from Solver import *
 from LinearAlgebra import *
 
 ################################### MESH #########################################
-Ncells = 200
+Ncells = 50
 xmin = 0 
 xmax = 10
 
@@ -40,17 +40,18 @@ S = SourceTerm(MESH.num_TotCells)
 
 ################################ BoundaryConditions ####################################
 BC_LEFT = BoundaryCondition(type="SupersonicInlet")
-BC_RIGHT = BoundaryCondition(type="SubsonicOutlet", back_pressure=1.9*pinf, mesh=MESH)
+BC_RIGHT =  BoundaryCondition(type="SupersonicOutlet")
+# BC_RIGHT = BoundaryCondition(type="SubsonicOutlet", back_pressure=1.9*pinf, mesh=MESH)
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
-SCHEME = LaxWendroff()
+SCHEME = BeamWarming(0.125, 5*0.125)
 
 ################################# Linear Solver #######################################
 LINEAR_SOLVER = DirectSolver()
 
 ################################ Solver ################################################
-CFL = 1
+CFL = 0.4
 maxTime = 30
 files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt']
 solver = TransientSolver(maxTime, CFL, MESH, Q, E, S, BCS, SCHEME, files, LINEAR_SOLVER)

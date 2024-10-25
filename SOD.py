@@ -40,7 +40,7 @@ BC_RIGHT = BoundaryCondition(type="O_oder_extrapolation")
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
-SCHEME = BeamWarmingTEST(0.125, 2.5*0.125)
+SCHEME = BeamWarming(0.05, 2.5*0.05)
 
 ################################# Linear Solver #######################################
 LINEAR_SOLVER = DirectSolver()
