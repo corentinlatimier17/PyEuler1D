@@ -22,7 +22,7 @@ def dAdx_SOD(x):
     return np.zeros_like(x) 
 
 MESH = mesh(Ncells, xmin, xmax)
-MESH.init_mesh_SOD(area_SOD, dAdx_SOD)
+MESH.init_mesh(area_SOD, dAdx_SOD)
 
 ############################# Q - Conserved variables ###############################
 Q = ConservativeVariables(MESH.num_TotCells)

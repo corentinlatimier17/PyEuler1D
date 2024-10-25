@@ -36,7 +36,7 @@ class mesh:
         
         return ghost_mask
 
-    def init_mesh_SOD(self, func_area, func_dadx):
+    def init_mesh(self, func_area, func_dadx):
         self.area = func_area(self.coordinates)
         self.dAdx = func_dadx(self.coordinates)
 
