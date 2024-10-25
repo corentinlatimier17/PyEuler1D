@@ -1,6 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Global variables to keep track of the figure and axes
+fig1 = None # all in 1
+fig2 = None # density
+fig3 = None # u
+fig4 = None # energy
+fig5 = None # pressure
+fig6 = None # Mach
+
+axes1 = None
+
 def plot_residuals_from_file(file_path, save_path=None):
     """
     Reads residuals from a .txt file and plots their evolution over iterations.
@@ -97,64 +107,67 @@ def plot_mach_colormap(mach_data_path):
     plt.tight_layout()
 
 def plot_all_in_one(files, xmax, scheme_name):
+    global fig1, axes  # Use global variables to maintain state between function calls
+    
     # Read the data from the text files
     rhoA = read_data(files[0])
     u = read_data(files[1])
     rhoEA = read_data(files[2])
     pressure = read_data(files[3])
 
-    time_index = len(rhoA[:,0])-1
+    time_index = len(rhoA[:,0]) - 1
 
     # Define the x-coordinates (space coordinates)
-    x_coords = rhoA[0,1:]  # First row contains the coordinates
+    x_coords = rhoA[0, 1:]  # First row contains the coordinates
 
     # Select the specified time index for plotting
     if time_index < 0 or time_index >= rhoA.shape[0]:
         raise ValueError("Invalid time index.")
 
+    # Extract data for the selected time index
     rhoA_t = rhoA[time_index, 1:]
     u_t = u[time_index, 1:]
-    rhoEA_t = rhoEA[time_index,1:]
+    rhoEA_t = rhoEA[time_index, 1:]
     pressure_t = pressure[time_index, 1:]
 
-    # Create a figure with 4 subplots
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    # Create the figure and axes only if they haven't been created yet
+    if fig1 is None or axes is None:
+        fig1, axes = plt.subplots(2, 2, figsize=(14, 10))
+        # Set up the plots for the first time
+        axes[0, 0].set_xlabel(r'$x/L$', fontsize=12)
+        axes[0, 0].set_ylabel(r'Density ($\rho$)', fontsize=12)
+        axes[0, 1].set_xlabel(r'$x/L$', fontsize=12)
+        axes[0, 1].set_ylabel(r'$x$-velocity ($u$)', fontsize=12)
+        axes[1, 0].set_xlabel(r'$x/L$', fontsize=12)
+        axes[1, 0].set_ylabel(r'Total energy ($\rho E$)', fontsize=12)
+        axes[1, 1].set_xlabel(r'$x/L$', fontsize=12)
+        axes[1, 1].set_ylabel(r'Pressure ($p$)', fontsize=12)
 
-    # Plot Density
-    axes[0, 0].plot(x_coords / xmax, rhoA_t, label=scheme_name + ' scheme', color='tab:blue', linewidth=2)
-    axes[0, 0].set_xlabel(r'$x/L$', fontsize=12)
-    axes[0, 0].set_ylabel(r'Density ($\rho$)', fontsize=12)
-    axes[0, 0].grid(True)
-    axes[0, 0].legend(fontsize=10)
+    # Plot data for the current time step
+    axes[0, 0].plot(x_coords / xmax, rhoA_t, label=scheme_name, linewidth=2)
+    axes[0, 1].plot(x_coords / xmax, u_t, label=scheme_name, linewidth=2)
+    axes[1, 0].plot(x_coords / xmax, rhoEA_t, label=scheme_name, linewidth=2)
+    axes[1, 1].plot(x_coords / xmax, pressure_t, label=scheme_name, linewidth=2)
 
-    # Plot Velocity
-    axes[0, 1].plot(x_coords / xmax, u_t, label=scheme_name + ' scheme', color='tab:green', linewidth=2)
-    axes[0, 1].set_xlabel(r'$x/L$', fontsize=12)
-    axes[0, 1].set_ylabel(r'$x$-velocity ($u$)', fontsize=12)
-    axes[0, 1].grid(True)
-    axes[0, 1].legend(fontsize=10)
+    # Add grid and legend for each subplot
+    for ax in axes.flatten():
+        ax.grid(True)
+        ax.legend(fontsize=10)
 
-    # Plot Energy
-    axes[1, 0].plot(x_coords / xmax, rhoEA_t, label=scheme_name + ' scheme', color="tab:red", linewidth=2)
-    axes[1, 0].set_xlabel(r'$x/L$', fontsize=12)
-    axes[1, 0].set_ylabel(r'Total energy ($\rho E$)', fontsize=12)
-    axes[1, 0].grid(True)
-    axes[1, 0].legend(fontsize=10)
-
-    # Plot Pressure
-    axes[1, 1].plot(x_coords / xmax, pressure_t, label=scheme_name + ' scheme', color="tab:purple", linewidth=2)
-    axes[1, 1].set_xlabel(r'$x/L$', fontsize=12)
-    axes[1, 1].set_ylabel(r'Pressure ($p$)', fontsize=12)
-    axes[1, 1].grid(True)
-    axes[1, 1].legend(fontsize=10)
-
-    # Adjust layout and show the plot
-    plt.tight_layout()
+    # Adjust layout and show the plot only if this is the first time calling the function
+    if fig1 is not None:
+        plt.tight_layout()
+        plt.show(block=False)  # Use block=False to avoid blocking execution
+    else:
+        plt.draw()  # Update the existing figure
 
 def plot_density(files, xmax, scheme):
+    global fig2  # Access the global figure variable
+    
     # Read the data from the text file
     rhoA = read_data(files[0])
-    time_index = len(rhoA[:,0])-1
+    time_index = len(rhoA[:, 0]) - 1
+
     # Define the x-coordinates (space coordinates)
     x_coords = rhoA[0, 1:]  # First row contains the coordinates
 
@@ -164,20 +177,33 @@ def plot_density(files, xmax, scheme):
 
     rhoA_t = rhoA[time_index, 1:]
 
-    # Create a plot for density
-    plt.figure(figsize=(10, 6))
-    plt.plot(x_coords/xmax, rhoA_t, label= scheme + ' scheme', color='tab:blue', linewidth=2)
+    # Create the figure if it hasn't been created yet
+    if fig2 is None:
+        fig2 = plt.figure(figsize=(10, 6))
+
+    # Clear the figure if you want to reset it (optional)
+    # fig2.clf()
+
+    # Create a new subplot for density if you want to keep adding to the same figure
+    plt.plot(x_coords / xmax, rhoA_t, label=scheme, linewidth=2)
+
+    # Set labels and other plot attributes
     plt.xlabel(r'$x/L$', fontsize=18)
     plt.ylabel(r'Density ($\rho A$)', fontsize=18)
     plt.grid(True)
     plt.legend(fontsize=15)
     plt.tight_layout()
-    plt.tick_params(axis = 'both', labelsize = 15)
+    plt.tick_params(axis='both', labelsize=15)
+
+    # Show the plot without blocking
+    plt.show(block=False)
 
 def plot_velocity(files, xmax, scheme):
-     # Read the data from the text file
+    global fig3  # Access the global figure variable
+    
+    # Read the data from the text file
     u = read_data(files[1])
-    time_index = len(u[:,0])-1
+    time_index = len(u[:, 0]) - 1
 
     # Define the x-coordinates (space coordinates)
     x_coords = u[0, 1:]  # First row contains the coordinates
@@ -188,20 +214,33 @@ def plot_velocity(files, xmax, scheme):
 
     u_t = u[time_index, 1:]
 
-    # Create a plot for u
-    plt.figure(figsize=(10, 6))
-    plt.plot(x_coords/xmax, u_t, label=scheme + ' scheme', color='tab:green', linewidth=2)
+    # Create the figure if it hasn't been created yet
+    if fig3 is None:
+        fig3 = plt.figure(figsize=(10, 6))
+
+    # Clear the figure if you want to reset it (optional)
+    # fig3.clf()
+
+    # Create a new plot for velocity
+    plt.plot(x_coords / xmax, u_t, label=scheme, linewidth=2)
+
+    # Set labels and other plot attributes
     plt.xlabel(r'$x/L$', fontsize=18)
     plt.ylabel(r'$x$-velocity ($u$)', fontsize=18)
     plt.grid(True)
     plt.legend(fontsize=15)
     plt.tight_layout()
-    plt.tick_params(axis = 'both', labelsize = 15)
+    plt.tick_params(axis='both', labelsize=15)
+
+    # Show the plot without blocking
+    plt.show(block=False)
 
 def plot_energy(files, xmax, scheme):
-     # Read the data from the text file
+    global fig4  # Access the global figure variable
+    
+    # Read the data from the text file
     rhoEA = read_data(files[2])
-    time_index = len(rhoEA[:,0])-1
+    time_index = len(rhoEA[:, 0]) - 1
 
     # Define the x-coordinates (space coordinates)
     x_coords = rhoEA[0, 1:]  # First row contains the coordinates
@@ -212,20 +251,34 @@ def plot_energy(files, xmax, scheme):
 
     rhoEA_t = rhoEA[time_index, 1:]
 
-    # Create a plot for u
-    plt.figure(figsize=(10, 6))
-    plt.plot(x_coords/xmax, rhoEA_t, label=scheme + ' scheme', color='tab:green', linewidth=2)
+    # Create the figure if it hasn't been created yet
+    if fig4 is None:
+        fig4 = plt.figure(figsize=(10, 6))
+
+    # Clear the figure if you want to reset it (optional)
+    # fig4.clf()
+
+    # Create a new plot for total energy
+    plt.plot(x_coords / xmax, rhoEA_t, label=scheme + ' scheme', color='tab:blue', linewidth=2)
+
+    # Set labels and other plot attributes
     plt.xlabel(r'$x/L$', fontsize=18)
-    plt.ylabel(r'Total energy ($\rho EA$)', fontsize=12)
+    plt.ylabel(r'Total energy ($\rho E A$)', fontsize=12)
     plt.grid(True)
     plt.legend(fontsize=15)
     plt.tight_layout()
-    plt.tick_params(axis = 'both', labelsize = 15)
+    plt.tick_params(axis='both', labelsize=15)
+
+    # Show the plot without blocking
+    plt.show(block=False)
+
 
 def plot_pressure(files, xmax, scheme):
-     # Read the data from the text file
+    global fig5  # Access the global figure variable
+    
+    # Read the data from the text file
     p = read_data(files[3])
-    time_index = len(p[:,0])-1
+    time_index = len(p[:, 0]) - 1
 
     # Define the x-coordinates (space coordinates)
     x_coords = p[0, 1:]  # First row contains the coordinates
@@ -236,20 +289,31 @@ def plot_pressure(files, xmax, scheme):
 
     p_t = p[time_index, 1:]
 
-    # Create a plot for u
-    plt.figure(figsize=(10, 6))
-    plt.plot(x_coords/xmax, p_t, label=scheme + ' scheme', color='tab:green', linewidth=2)
+    # Create the figure if it hasn't been created yet
+    if fig5 is None:
+        fig5 = plt.figure(figsize=(10, 6))
+
+    # Create a new plot for pressure
+    plt.plot(x_coords / xmax, p_t, label=scheme + ' scheme', color='tab:red', linewidth=2)
+
+    # Set labels and other plot attributes
     plt.xlabel(r'$x/L$', fontsize=18)
     plt.ylabel(r'Pressure ($p$)', fontsize=12)
     plt.grid(True)
     plt.legend(fontsize=15)
     plt.tight_layout()
-    plt.tick_params(axis = 'both', labelsize = 15)
+    plt.tick_params(axis='both', labelsize=15)
+
+    # Show the plot without blocking
+    plt.show(block=False)
+
 
 def plot_mach(files, xmax, scheme):
-     # Read the data from the text file
+    global fig6  # Access the global figure variable
+    
+    # Read the data from the text file
     mach = read_data(files[4])
-    time_index = len(mach[:,0])-1
+    time_index = len(mach[:, 0]) - 1
 
     # Define the x-coordinates (space coordinates)
     x_coords = mach[0, 1:]  # First row contains the coordinates
@@ -260,12 +324,20 @@ def plot_mach(files, xmax, scheme):
 
     mach_t = mach[time_index, 1:]
 
-    # Create a plot for u
-    plt.figure(figsize=(10, 6))
-    plt.plot(x_coords/xmax, mach_t, label=scheme + ' scheme', color='tab:green', linewidth=2)
+    # Create the figure if it hasn't been created yet
+    if fig6 is None:
+        fig6 = plt.figure(figsize=(10, 6))
+
+    # Add the Mach number plot to fig6
+    plt.plot(x_coords / xmax, mach_t, label=scheme + ' scheme', color='tab:purple', linewidth=2)
+
+    # Set labels and other plot attributes
     plt.xlabel(r'$x/L$', fontsize=18)
-    plt.ylabel(r'Mach number', fontsize=12)
+    plt.ylabel(r'Mach number', fontsize=18)
     plt.grid(True)
     plt.legend(fontsize=15)
     plt.tight_layout()
-    plt.tick_params(axis = 'both', labelsize = 15)
+    plt.tick_params(axis='both', labelsize=15)
+
+    # Show the plot without blocking
+    plt.show(block=False)

@@ -41,27 +41,22 @@ BC_RIGHT = BoundaryCondition(type="O_oder_extrapolation")
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
-SCHEME = LaxWendroff()
-# SCHEME = LaxWendroff(0.05, 2.5*0.05)
+SCHEME_1 = MacCormack()
+SCHEME_2 = LaxWendroff()
+SCHEME_3 = BeamWarming(0.05, 2.5*0.05)
 
 ################################# Linear Solver #######################################
 LINEAR_SOLVER = DirectSolver()
 
 ################################ Solver (transient) ###################################
-CFL = 0.4
+CFL = 0.5
 maxTime = 250
 files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt', 'output/SOD/mach.txt']
-solver = TransientSolver(maxTime, CFL, MESH, Q, E, S, BCS, SCHEME, files, LINEAR_SOLVER)
+solver_1 = TransientSolver(maxTime, CFL, MESH, Q, E, S, BCS, SCHEME_1, files, LINEAR_SOLVER)
 
 ################################ Resolution #############################################
-solver.solve()
+solver_1.solve()
 
 ################################ Post processing #########################################
-plot_all_in_one(files, xmax, "Lax Wendroff")
-plot_mach(files, xmax, "Lax-Wendroff")
+plot_all_in_one(files, xmax, "Mac-Cormack")
 plt.show()
-
-
-
-
-
