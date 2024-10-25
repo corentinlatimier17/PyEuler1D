@@ -12,7 +12,7 @@ from LinearAlgebra import *
 from PostProcessing import *
 
 ################################### MESH #########################################
-Ncells = 500
+Ncells = 300
 xmin = 0 
 xmax = 1000
 
@@ -58,8 +58,8 @@ SCHEME_3 = BeamWarming(0.05, 2.5*0.05)
 LINEAR_SOLVER = DirectSolver()
 
 ################################ Solver 1 (transient) ###################################
-CFL = 0.3
-maxTime = 50
+CFL = 0.5
+maxTime = 250
 files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt', 'output/SOD/mach.txt']
 
 solver_1 = TransientSolver(maxTime, CFL, MESH, Q_1, E_1, S_1, BCS, SCHEME_2, files, LINEAR_SOLVER)
@@ -69,15 +69,32 @@ solver_3 = TransientSolver(maxTime, CFL, MESH, Q_3, E_3, S_3, BCS, SCHEME_3, fil
 ################################ Resolution & Post processing #############################################
 solver_1.solve()
 plot_all_in_one(files, xmax, "Mac-Cormack")
+plot_density(files, xmax, "Mac-Cormack")
+plot_velocity(files, xmax, "Mac-Cormack")
+plot_energy(files, xmax, "Mac-Cormack")
+plot_pressure(files, xmax, "Mac-Cormack")
+plot_mach(files, xmax, "Mac-Cormack")
+
 
 solver_2.solve()
 plot_all_in_one(files, xmax, "Lax-Wendroff")
+plot_density(files, xmax, "Lax-Wendroff")
+plot_velocity(files, xmax, "Lax-Wendroff")
+plot_energy(files, xmax, "Lax-Wendroff")
+plot_pressure(files, xmax, "Lax-Wendroff")
+plot_mach(files, xmax, "Lax-Wendroff")
 
 solver_3.solve()
 plot_all_in_one(files, xmax, "Beam Warming")
-
+plot_density(files, xmax,  "Beam Warming")
+plot_velocity(files, xmax,  "Beam Warming")
+plot_energy(files, xmax,  "Beam Warming")
+plot_pressure(files, xmax,  "Beam Warming")
+plot_mach(files, xmax,  "Beam Warming")
 
 plt.show()
+
+
 
 
 
