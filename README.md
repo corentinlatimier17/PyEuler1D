@@ -11,4 +11,4 @@ The solver supports various linear solvers:
     Jacobi Method
     Classical Matrix Inversion
 
-Currently, the solver is applied to the Sod shock tube problem.
+Currently, the solver is applied to the Sod shock tube and the Quasi-1D nozzle problems.
