@@ -9,6 +9,7 @@ from Numerics import *
 from Thermodynamics import *
 from Solver import *
 from LinearAlgebra import *
+from PostProcessing import *
 
 ################################### MESH #########################################
 Ncells = 500
@@ -40,19 +41,26 @@ BC_RIGHT = BoundaryCondition(type="O_oder_extrapolation")
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
-SCHEME = BeamWarming(0.05, 2.5*0.05)
+SCHEME = LaxWendroff()
+# SCHEME = LaxWendroff(0.05, 2.5*0.05)
 
 ################################# Linear Solver #######################################
 LINEAR_SOLVER = DirectSolver()
 
-################################ Solver ################################################
-CFL = 1
+################################ Solver (transient) ###################################
+CFL = 0.4
 maxTime = 250
-files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt']
+files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt', 'output/SOD/mach.txt']
 solver = TransientSolver(maxTime, CFL, MESH, Q, E, S, BCS, SCHEME, files, LINEAR_SOLVER)
 
 ################################ Resolution #############################################
 solver.solve()
+
+################################ Post processing #########################################
+plot_all_in_one(files, xmax, "Lax Wendroff")
+plot_mach(files, xmax, "Lax-Wendroff")
+plt.show()
+
 
 
 

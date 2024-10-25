@@ -24,11 +24,16 @@ class MacCormack:
     def __init__(self):
         pass
 
-    def iterate(self, Q, E, S, MESH, deltaT, BCS, LINEAR_SOLVER, num_iter=None):
+    def iterate(self, Q, E, S, MESH, DELTA_T, BCS,LINEAR_SOLVER, isSteady, num_iter=None):
         # Prediction step
         Q_pred = copy.deepcopy(Q)
 
         for i in MESH.innerCellsIndexes:
+            if isSteady:
+                deltaT = DELTA_T[i] # if steady, DELTA_T is a vector
+            else:
+                deltaT = DELTA_T # if transient, DELTA_T is a float
+            
             QpredCell = np.zeros((3,1), dtype=np.float64)
 
             Qcell = Q.get_QCell(i)
@@ -66,6 +71,8 @@ class MacCormack:
 
         BCS.apply_BCs(Q_corr)
 
+        Q_prev = copy.deepcopy(Q) # save last solution to compute residuals
+
         # Update of Q considering prediction and correction 
         Q.rhoA = 0.5*(Q_corr.rhoA + Q_pred.rhoA)
         Q.rhouA = 0.5*(Q_corr.rhouA + Q_pred.rhouA)
@@ -76,17 +83,28 @@ class MacCormack:
         E.update_Fluxes(Q, MESH)
         S.update_SourceTerm(Q, MESH)
 
+        if isSteady:
+            res_rhoA = np.linalg.norm(Q_prev.rhoA-Q.rhoA, 2)
+            res_rhouA = np.linalg.norm(Q_prev.rhouA-Q.rhouA, 2)
+            res_rhoEA = np.linalg.norm(Q_prev.rhoEA-Q.rhoEA, 2)
+            return res_rhoA, res_rhouA, res_rhoEA
+
 class LaxWendroff:
     def __init__(self):
         pass
 
-    def iterate(self, Q, E, S, MESH, deltaT, BCS, LINEAR_SOLVER, num_iter):
+    def iterate(self, Q, E, S, MESH, DELTA_T, BCS, LINEAR_SOLVER, isSteady, num_iter):
         if num_iter <=10:
             MAC_CORMACK = MacCormack()
-            MAC_CORMACK.iterate(Q, E, S, MESH, deltaT, BCS, num_iter)
+            return(MAC_CORMACK.iterate(Q, E, S, MESH, DELTA_T, BCS,LINEAR_SOLVER, isSteady, num_iter))
         else:
             Qnew = np.zeros((3, MESH.num_TotCells), dtype=np.float64)
             for i in MESH.innerCellsIndexes:
+                if isSteady:
+                    deltaT = DELTA_T[i] # if steady, DELTA_T is a vector
+                else:
+                    deltaT = DELTA_T # if transient, DELTA_T is a float
+    
                 El = E.get_FluxesCell(i-1)
                 Ecell = E.get_FluxesCell(i)
                 Er = E.get_FluxesCell(i+1)
@@ -115,6 +133,8 @@ class LaxWendroff:
 
                 Qnew[:, i] = Qnew_vec.reshape((3,))
 
+            Q_prev = copy.deepcopy(Q)
+
             for i in MESH.innerCellsIndexes:
                 Q.rhoA[i] = Qnew[0, i]
                 Q.rhouA[i] = Qnew[1, i]
@@ -126,19 +146,29 @@ class LaxWendroff:
             E.update_Fluxes(Q, MESH)
             S.update_SourceTerm(Q, MESH)
 
+            if isSteady:
+                res_rhoA = np.linalg.norm(Q_prev.rhoA-Q.rhoA, 2)
+                res_rhouA = np.linalg.norm(Q_prev.rhouA-Q.rhouA, 2)
+                res_rhoEA = np.linalg.norm(Q_prev.rhoEA-Q.rhoEA, 2)
+                return res_rhoA, res_rhouA, res_rhoEA
+
 class BeamWarming:
     def __init__(self, epsE=0.125, epsI=2*0.125):
         self.epsE = epsE
         self.epsI = epsI
 
-    def iterate(self, Q, E, S, MESH, deltaT, BCS, LINEAR_SOLVER , num_iter):
+    def iterate(self, Q, E, S, MESH, DELTA_T, BCS, LINEAR_SOLVER ,isSteady, num_iter=None):
     
-        
         num_inner_cells = len(MESH.innerCellsIndexes)
         MATRIX_BM = np.zeros((3*num_inner_cells, 3*num_inner_cells), dtype=np.float64) # Reduced block tridiagonal matrix
         RHS_BM = np.zeros((3*num_inner_cells, 1), dtype=np.float64)
 
         for idx, i in enumerate(MESH.innerCellsIndexes):  # idx -> indices dans la liste / i -> indice dans le maillage
+            if isSteady:
+                deltaT = DELTA_T[i] # if steady, DELTA_T is a vector
+            else:
+                deltaT = DELTA_T # if transient, DELTA_T is a float
+
             # Get fluxes and Jacobians
             El = E.get_FluxesCell(i-1)
             Er = E.get_FluxesCell(i+1)
@@ -176,8 +206,8 @@ class BeamWarming:
                     Qrr = Q.get_QCell(i+2)
                     Qll = Q.get_QCell(i-2)
                     RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) - self.epsE * (Qll - 4*Ql + 6*Qcell - 4*Qr + Qrr) + deltaT*Scell
-                else:  # Second order dissipation at boundaries
-                    RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) -self.epsE*(Ql + Qr-2*Qcell) + deltaT*Scell
+                else:  # No dissipation at boundaries
+                    RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) + deltaT*Scell
                 RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
 
             elif idx==0:
@@ -200,6 +230,7 @@ class BeamWarming:
 
         # Solve for deltaQ for inner cells only
         deltaQ = LINEAR_SOLVER.solve(MATRIX_BM, RHS_BM)
+        Q_prev = copy.deepcopy(Q)
 
         # Update Q for inner cells
         for idx, i in enumerate(MESH.innerCellsIndexes):
@@ -212,6 +243,12 @@ class BeamWarming:
         Q.update_pressure(MESH)
         E.update_Fluxes(Q, MESH)
         S.update_SourceTerm(Q, MESH)
+
+        if isSteady:
+            res_rhoA = np.linalg.norm(Q_prev.rhoA-Q.rhoA, 2)
+            res_rhouA = np.linalg.norm(Q_prev.rhouA-Q.rhouA, 2)
+            res_rhoEA = np.linalg.norm(Q_prev.rhoEA-Q.rhoEA, 2)
+            return res_rhoA, res_rhouA, res_rhoEA
 
 
 

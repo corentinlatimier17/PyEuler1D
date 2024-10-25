@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
 from mesh import *
 from Conservatives import *
 from Fluxes import *
@@ -9,9 +10,10 @@ from Numerics import *
 from Thermodynamics import *
 from Solver import *
 from LinearAlgebra import *
+from PostProcessing import *
 
 ################################### MESH #########################################
-Ncells = 50
+Ncells = 200
 xmin = 0 
 xmax = 10
 
@@ -30,7 +32,8 @@ Q = ConservativeVariables(MESH.num_TotCells)
 # Initialization with intlet
 Minf, pinf, rho_inf = 1.25, 1.0, 1.0
 u_inf = Minf*np.sqrt(GAMMA*pinf/rho_inf)
-Q.init_Q_Nozzle(MESH, rho_inf, u_inf, pinf)
+
+Q.init_Q_Nozzle(MESH, rho_inf, u_inf, pinf, Minf)
 
 ################################# F - Fluxes #########################################
 E = Fluxes(MESH.num_TotCells)
@@ -45,20 +48,31 @@ BC_RIGHT =  BoundaryCondition(type="SupersonicOutlet")
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
-SCHEME = BeamWarming(0.125, 5*0.125)
+SCHEME = LaxWendroff()
+scheme = 'Lax-Wendroff'
 
 ################################# Linear Solver #######################################
-LINEAR_SOLVER = DirectSolver()
+LINEAR_SOLVER = DirectSolver() # only used for Beam Warming scheme
 
-################################ Solver ################################################
-CFL = 0.4
-maxTime = 30
-files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt']
-solver = TransientSolver(maxTime, CFL, MESH, Q, E, S, BCS, SCHEME, files, LINEAR_SOLVER)
+################################ Solver (steady) ################################################
+CFL = 0.5
+eps_res = 10**(-5)
+files = ['output/Nozzle/rhoA.txt', 'output/Nozzle/u.txt', 'output/Nozzle/rhoEA.txt', 'output/Nozzle/pressure.txt', 'output/Nozzle/mach.txt']
+file_residual = 'output/Nozzle/residuals.txt'
+solver = SteadySolver(eps_res, CFL, MESH, Q, E, S, BCS, SCHEME, files,file_residual,LINEAR_SOLVER, itermax=50000)
 
 ################################ Resolution #############################################
 solver.solve()
 
+################################ Post-processing ########################################
+plot_residuals_from_file(file_residual) # plot residuals across iterations
+plot_mach_colormap(files[4]) # Mach distribution
+plot_all_in_one(files, xmax, scheme)
+plot_mach(files, xmax, scheme)
+plot_density(files, xmax, scheme)
+plot_energy(files, xmax, scheme)
+plot_pressure(files, xmax, scheme)
+plt.show()
 
 
 

@@ -38,9 +38,8 @@ class ConservativeVariables:
                 self.pressure[i] = 1
             self.rhoEA[i] = self.pressure[i]/(GAMMA-1)*mesh.area[i]
     
-    def init_Q_Nozzle(self, mesh, rho_inf, u_inf, pinf):
+    def init_Q_Nozzle(self, mesh, rho_inf, u_inf, pinf, Minf):
         rhoinfEinf = pinf/(GAMMA-1)+0.5*rho_inf*u_inf**2
-
         self.rhoA= rho_inf*mesh.area
         self.rhouA= rho_inf*u_inf*mesh.area
         self.rhoEA = rhoinfEinf*mesh.area

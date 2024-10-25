@@ -37,15 +37,15 @@ class BoundaryConditions:
 
     def apply_supersonic_outlet_right(self, Q):    
         # Ghost cell de droite (après la dernière cellule intérieure)
-        Q.rhoA[-1] = Q.rhoA[-2]  # Copie de la première cellule intérieure dans la première ghost cell
+        Q.rhoA[-1] = Q.rhoA[-2] # Copie de la première cellule intérieure dans la première ghost cell
         Q.rhouA[-1] = Q.rhouA[-2]
         Q.rhoEA[-1] = Q.rhoEA[-2]
 
-    def apply_subsonic_outlet_right(self, Q):
+    def apply_subsonic_outlet_right(self, Q): # based on Riemann invariant 
         p_l = Q.pressure[-2]
         rho_l = Q.rhoA[-2]/self.BC_right.mesh.area[-2]
         s = p_l/rho_l**(GAMMA)
-        c_l = compute_sound_velocity(Q, self.BC_right.mesh)[-1] # gives the sound velocity only for inner cells
+        c_l = compute_sound_velocity(Q, self.BC_right.mesh)[-2] # last inner cell sound velocity
         J1 = 2*c_l/(GAMMA-1)+Q.rhouA[-2]/(Q.rhoA[-2])
         c = np.sqrt(GAMMA*self.BC_right.back_pressure**((GAMMA-1)/GAMMA)*s**(1/GAMMA))
         J2 = J1-4/(GAMMA-1)*c
