@@ -158,98 +158,94 @@ class BeamWarming:
         self.epsI = epsI
 
     def iterate(self, Q, E, S, MESH, DELTA_T, BCS, LINEAR_SOLVER ,isSteady, num_iter=None):
-             if num_iter <=100:
-                MAC_CORMACK = MacCormack()
-                return(MAC_CORMACK.iterate(Q, E, S, MESH, DELTA_T, BCS,LINEAR_SOLVER, isSteady, num_iter))
-             else:   
-                num_inner_cells = len(MESH.innerCellsIndexes)
-                MATRIX_BM = np.zeros((3*num_inner_cells, 3*num_inner_cells), dtype=np.float64) # Reduced block tridiagonal matrix
-                RHS_BM = np.zeros((3*num_inner_cells, 1), dtype=np.float64)
+            num_inner_cells = len(MESH.innerCellsIndexes)
+            MATRIX_BM = np.zeros((3*num_inner_cells, 3*num_inner_cells), dtype=np.float64) # Reduced block tridiagonal matrix
+            RHS_BM = np.zeros((3*num_inner_cells, 1), dtype=np.float64)
 
-                for idx, i in enumerate(MESH.innerCellsIndexes):  # idx -> indices dans la liste / i -> indice dans le maillage
-                    if isSteady:
-                        deltaT = DELTA_T[i] # if steady, DELTA_T is a vector
-                    else:
-                        deltaT = DELTA_T # if transient, DELTA_T is a float
-
-                    # Get fluxes and Jacobians
-                    El = E.get_FluxesCell(i-1)
-                    Er = E.get_FluxesCell(i+1)
-                    Ecell = E.get_FluxesCell(i)
-                    Al = computeJacobianMatrix(Q, i-1)
-                    Ar = computeJacobianMatrix(Q, i+1)
-
-                    # Get Source Term
-                    Scell = S.get_SourceTermCell(i)
-
-                    # Get states
-                    Qcell = Q.get_QCell(i)
-                    Qr = Q.get_QCell(i+1)
-                    Ql = Q.get_QCell(i-1)
-
-                    if idx!= 0 and  idx!= num_inner_cells-1:
-                        # Center block (diagonal)
-                        MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64)
-                        # Left block
-                        MATRIX_BM[3*idx:3*(idx+1), 3*(idx-1):3*idx] += -1/(2*MESH.dx)*Al
-                        # Right block
-                        MATRIX_BM[3*idx:3*(idx+1), 3*(idx+1):3*(idx+2)] += 1/(2*MESH.dx)*Ar
-
-                        # Add implicit dissipation (tridiagonal part)
-                        if idx > 0:  # Add to the left block
-                            MATRIX_BM[3*idx:3*(idx+1), 3*(idx-1):3*idx] -= self.epsI * np.identity(3)
-                        if idx < num_inner_cells - 1:  # Add to the right block
-                            MATRIX_BM[3*idx:3*(idx+1), 3*(idx+1):3*(idx+2)] -= self.epsI* np.identity(3)
-
-                        # Add implicit dissipation to diagonal
-                        MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += 2*self.epsI * np.identity(3)
-
-                        # Add explicit fourth-order dissipation to RHS
-                        if idx > 1 and idx < num_inner_cells - 2:
-                            Qrr = Q.get_QCell(i+2)
-                            Qll = Q.get_QCell(i-2)
-                            RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) - self.epsE * (Qll - 4*Ql + 6*Qcell - 4*Qr + Qrr) + deltaT*Scell
-                        else:  # No dissipation at boundaries
-                            RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) + deltaT*Scell
-                        RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
-
-                    elif idx==0:
-                        # Center block (diagonal)
-                        MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64)
-                        # Right block
-                        MATRIX_BM[3*idx:3*(idx+1), 3*(idx+1):3*(idx+2)] += 1/(MESH.dx)*Ar
-                        # Right hand side 
-                        RHS_BM_cell = -deltaT/(MESH.dx)*(Er-Ecell) + deltaT*Scell 
-                        RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
-
-                    elif idx==num_inner_cells-1:
-                        # Center block (diagonal)
-                        MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64) 
-                        # Right hand side 
-                        RHS_BM_cell = -deltaT/(MESH.dx)*(Ecell-El) + deltaT*Scell
-                        RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
-
-                # Solve for deltaQ for inner cells only
-                deltaQ = LINEAR_SOLVER.solve(MATRIX_BM, RHS_BM)
-                Q_prev = copy.deepcopy(Q)
-
-                # Update Q for inner cells
-                for idx, i in enumerate(MESH.innerCellsIndexes):
-                    Q.rhoA[i] += deltaQ[3*idx]
-                    Q.rhouA[i] += deltaQ[3*idx+1]
-                    Q.rhoEA[i] += deltaQ[3*idx+2]
-                        
-                # Apply boundary conditions and update fluxes
-                BCS.apply_BCs(Q)
-                Q.update_pressure(MESH)
-                E.update_Fluxes(Q, MESH)
-                S.update_SourceTerm(Q, MESH)
-
+            for idx, i in enumerate(MESH.innerCellsIndexes):  # idx -> indices dans la liste / i -> indice dans le maillage
                 if isSteady:
-                    res_rhoA = np.linalg.norm(Q_prev.rhoA-Q.rhoA, 2)
-                    res_rhouA = np.linalg.norm(Q_prev.rhouA-Q.rhouA, 2)
-                    res_rhoEA = np.linalg.norm(Q_prev.rhoEA-Q.rhoEA, 2)
-                    return res_rhoA, res_rhouA, res_rhoEA
+                    deltaT = DELTA_T[i] # if steady, DELTA_T is a vector
+                else:
+                    deltaT = DELTA_T # if transient, DELTA_T is a float
+
+                # Get fluxes and Jacobians
+                El = E.get_FluxesCell(i-1)
+                Er = E.get_FluxesCell(i+1)
+                Ecell = E.get_FluxesCell(i)
+                Al = computeJacobianMatrix(Q, i-1)
+                Ar = computeJacobianMatrix(Q, i+1)
+
+                # Get Source Term
+                Scell = S.get_SourceTermCell(i)
+
+                # Get states
+                Qcell = Q.get_QCell(i)
+                Qr = Q.get_QCell(i+1)
+                Ql = Q.get_QCell(i-1)
+
+                if idx!= 0 and  idx!= num_inner_cells-1:
+                    # Center block (diagonal)
+                    MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64)
+                    # Left block
+                    MATRIX_BM[3*idx:3*(idx+1), 3*(idx-1):3*idx] += -1/(2*MESH.dx)*Al
+                    # Right block
+                    MATRIX_BM[3*idx:3*(idx+1), 3*(idx+1):3*(idx+2)] += 1/(2*MESH.dx)*Ar
+
+                    # Add implicit dissipation (tridiagonal part)
+                    if idx > 0:  # Add to the left block
+                        MATRIX_BM[3*idx:3*(idx+1), 3*(idx-1):3*idx] -= self.epsI * np.identity(3)
+                    if idx < num_inner_cells - 1:  # Add to the right block
+                        MATRIX_BM[3*idx:3*(idx+1), 3*(idx+1):3*(idx+2)] -= self.epsI* np.identity(3)
+
+                    # Add implicit dissipation to diagonal
+                    MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += 2*self.epsI * np.identity(3)
+
+                    # Add explicit fourth-order dissipation to RHS
+                    if idx > 1 and idx < num_inner_cells - 2:
+                        Qrr = Q.get_QCell(i+2)
+                        Qll = Q.get_QCell(i-2)
+                        RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) - self.epsE * (Qll - 4*Ql + 6*Qcell - 4*Qr + Qrr) + deltaT*Scell
+                    else:  # No dissipation at boundaries
+                        RHS_BM_cell = -deltaT/(2*MESH.dx)*(Er-El) + deltaT*Scell
+                    RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
+
+                elif idx==0:
+                    # Center block (diagonal)
+                    MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64)
+                    # Right block
+                    MATRIX_BM[3*idx:3*(idx+1), 3*(idx+1):3*(idx+2)] += 1/(MESH.dx)*Ar
+                    # Right hand side 
+                    RHS_BM_cell = -deltaT/(MESH.dx)*(Er-Ecell) + deltaT*Scell 
+                    RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
+
+                elif idx==num_inner_cells-1:
+                    # Center block (diagonal)
+                    MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64) 
+                    # Right hand side 
+                    RHS_BM_cell = -deltaT/(MESH.dx)*(Ecell-El) + deltaT*Scell
+                    RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
+
+            # Solve for deltaQ for inner cells only
+            deltaQ = LINEAR_SOLVER.solve(MATRIX_BM, RHS_BM)
+            Q_prev = copy.deepcopy(Q)
+
+            # Update Q for inner cells
+            for idx, i in enumerate(MESH.innerCellsIndexes):
+                Q.rhoA[i] += deltaQ[3*idx]
+                Q.rhouA[i] += deltaQ[3*idx+1]
+                Q.rhoEA[i] += deltaQ[3*idx+2]
+                    
+            # Apply boundary conditions and update fluxes
+            BCS.apply_BCs(Q)
+            Q.update_pressure(MESH)
+            E.update_Fluxes(Q, MESH)
+            S.update_SourceTerm(Q, MESH)
+
+            if isSteady:
+                res_rhoA = np.linalg.norm(Q_prev.rhoA-Q.rhoA, 2)
+                res_rhouA = np.linalg.norm(Q_prev.rhouA-Q.rhouA, 2)
+                res_rhoEA = np.linalg.norm(Q_prev.rhoEA-Q.rhoEA, 2)
+                return res_rhoA, res_rhouA, res_rhoEA
 
 
 

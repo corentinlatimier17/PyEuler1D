@@ -58,7 +58,7 @@ BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 ################################ Numerical Scheme #####################################
 SCHEME_1 = MacCormack()
 SCHEME_2 = LaxWendroff()
-SCHEME_3 = BeamWarming(0.01, 0)
+SCHEME_3 = BeamWarming(0.125, 10*0.125)
 scheme1 = "Mac-Cormack - CFL = 0.8, N = 200"
 scheme2 = "Lax-Wendroff - CFL = 0.8, N = 200"
 scheme3 = r'Beam-Warming - CFL = 0.8, N = 200, $\epsilon_e = 0.125$, $\epsilon_i = 2*\epsilon_e$'
@@ -67,7 +67,7 @@ scheme3 = r'Beam-Warming - CFL = 0.8, N = 200, $\epsilon_e = 0.125$, $\epsilon_i
 LINEAR_SOLVER = DirectSolver() # only used for Beam Warming scheme
 
 ################################ Solver (steady) ################################################
-CFL = 0.8
+CFL = 0.5
 eps_res = 10**(-7)
 files = ['output/Nozzle/rhoA.txt', 'output/Nozzle/u.txt', 'output/Nozzle/rhoEA.txt', 'output/Nozzle/pressure.txt', 'output/Nozzle/mach.txt']
 file_residual = 'output/Nozzle/residuals.txt'
