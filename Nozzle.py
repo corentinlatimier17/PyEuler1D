@@ -76,7 +76,7 @@ solver_1 = SteadySolver(eps_res, CFL, MESH, Q_1, E_1, S_1, BCS, SCHEME_1, files,
 solver_2 = SteadySolver(eps_res, CFL, MESH, Q_2, E_2, S_2, BCS, SCHEME_2, files,file_residual,LINEAR_SOLVER, itermax=50000)
 solver_3 = SteadySolver(eps_res, CFL, MESH, Q_3, E_3, S_3, BCS, SCHEME_3, files,file_residual,LINEAR_SOLVER, itermax=50000)
 
-scheme = scheme3
+scheme = scheme3 # to change the label, change scheme3 in the scheme you are working on
 
 ################################ Resolution & Post-processing #############################################
 solver_3.solve()
