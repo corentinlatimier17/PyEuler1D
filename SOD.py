@@ -12,7 +12,7 @@ from LinearAlgebra import *
 from PostProcessing import *
 
 ################################### MESH #########################################
-Ncells = 300
+Ncells = 200
 xmin = 0 
 xmax = 1000
 
@@ -52,13 +52,13 @@ BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 ################################ Numerical Schemes #####################################
 SCHEME_1 = MacCormack()
 SCHEME_2 = LaxWendroff()
-SCHEME_3 = BeamWarming(0.05, 2.5*0.05)
+SCHEME_3 = BeamWarming(0.05, 2*0.05)
 
 ################################# Linear Solver #######################################
 LINEAR_SOLVER = DirectSolver()
 
 ################################ Solvers (transient) ###################################
-CFL = 0.5
+CFL = 0.6
 maxTime = 250
 files = ['output/SOD/rhoA.txt', 'output/SOD/u.txt', 'output/SOD/rhoEA.txt', 'output/SOD/pressure.txt', 'output/SOD/mach.txt']
 
@@ -68,29 +68,29 @@ solver_3 = TransientSolver(maxTime, CFL, MESH, Q_3, E_3, S_3, BCS, SCHEME_3, fil
 
 ################################ Resolution & Post processing #############################################
 solver_1.solve()
-plot_all_in_one(files, xmax, "Mac-Cormack")
-plot_density(files, xmax, "Mac-Cormack")
-plot_velocity(files, xmax, "Mac-Cormack")
-plot_energy(files, xmax, "Mac-Cormack")
-plot_pressure(files, xmax, "Mac-Cormack")
-plot_mach(files, xmax, "Mac-Cormack")
+plot_all_in_one(files, xmax, "Mac-Cormack - CFL = 0.6, N = 500")
+plot_density(files, xmax, "Mac-Cormack - CFL = 0.6, N = 500", True)
+plot_velocity(files, xmax, "Mac-Cormack - CFL = 0.6, N = 500", True)
+plot_energy(files, xmax, "Mac-Cormack - CFL = 0.6, N = 500", True)
+plot_pressure(files, xmax, "Mac-Cormack - CFL = 0.6, N = 500", True)
+plot_mach(files, xmax, "Mac-Cormack - CFL = 0.6, N = 500", True)
 
 
 solver_2.solve()
-plot_all_in_one(files, xmax, "Lax-Wendroff")
-plot_density(files, xmax, "Lax-Wendroff")
-plot_velocity(files, xmax, "Lax-Wendroff")
-plot_energy(files, xmax, "Lax-Wendroff")
-plot_pressure(files, xmax, "Lax-Wendroff")
-plot_mach(files, xmax, "Lax-Wendroff")
+plot_all_in_one(files, xmax, "Lax-Wendroff - CFL = 0.6, N = 500")
+plot_density(files, xmax, "Lax-Wendroff - CFL = 0.6, N = 500")
+plot_velocity(files, xmax, "Lax-Wendroff - CFL = 0.6, N = 500")
+plot_energy(files, xmax, "Lax-Wendroff - CFL = 0.6, N = 500")
+plot_pressure(files, xmax, "Lax-Wendroff - CFL = 0.6, N = 500")
+plot_mach(files, xmax, "Lax-Wendroff - CFL = 0.6, N = 500")
 
 solver_3.solve()
-plot_all_in_one(files, xmax, "Beam Warming")
-plot_density(files, xmax,  "Beam Warming")
-plot_velocity(files, xmax,  "Beam Warming")
-plot_energy(files, xmax,  "Beam Warming")
-plot_pressure(files, xmax,  "Beam Warming")
-plot_mach(files, xmax,  "Beam Warming")
+plot_all_in_one(files, xmax, r"Beam Warming - CFL = 0.6, N = 500, $\epsilon_e = 0.05$, $\epsilon_i = 2\epsilon_e$")
+plot_density(files, xmax, r"Beam Warming - CFL = 0.6, N = 500, $\epsilon_e = 0.05$, $\epsilon_i = 2\epsilon_e$")
+plot_velocity(files, xmax,r"Beam Warming - CFL = 0.6, N = 500, $\epsilon_e = 0.05$, $\epsilon_i = 2\epsilon_e$")
+plot_energy(files, xmax, r"Beam Warming - CFL = 0.6, N = 500, $\epsilon_e = 0.05$, $\epsilon_i = 2\epsilon_e$")
+plot_pressure(files, xmax, r"Beam Warming - CFL = 0.6, N = 500, $\epsilon_e = 0.05$, $\epsilon_i = 2\epsilon_e$")
+plot_mach(files, xmax, r"Beam Warming - CFL = 0.6, N = 500, $\epsilon_e = 0.05$, $\epsilon_i = 2\epsilon_e$")
 
 plt.show()
 
