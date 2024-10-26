@@ -13,7 +13,7 @@ from LinearAlgebra import *
 from PostProcessing import *
 
 ################################### MESH #########################################
-Ncells = 50
+Ncells = 200
 xmin = 0 
 xmax = 10
 
@@ -51,14 +51,14 @@ S_3 = SourceTerm(MESH.num_TotCells)
 
 ################################ BoundaryConditions ####################################
 BC_LEFT = BoundaryCondition(type="SupersonicInlet")
-# BC_RIGHT =  BoundaryCondition(type="SupersonicOutlet")
-BC_RIGHT = BoundaryCondition(type="SubsonicOutlet", back_pressure=1.9*pinf, mesh=MESH)
+BC_RIGHT =  BoundaryCondition(type="SupersonicOutlet")
+# BC_RIGHT = BoundaryCondition(type="SubsonicOutlet", back_pressure=1.9*pinf, mesh=MESH)
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
 SCHEME_1 = MacCormack()
 SCHEME_2 = LaxWendroff()
-SCHEME_3 = BeamWarming(0.125, 10*0.125)
+SCHEME_3 = BeamWarming(0.125, 2*0.125)
 scheme1 = "Mac-Cormack - CFL = 0.8, N = 200"
 scheme2 = "Lax-Wendroff - CFL = 0.8, N = 200"
 scheme3 = r'Beam-Warming - CFL = 0.8, N = 200, $\epsilon_e = 0.125$, $\epsilon_i = 2*\epsilon_e$'
@@ -67,26 +67,29 @@ scheme3 = r'Beam-Warming - CFL = 0.8, N = 200, $\epsilon_e = 0.125$, $\epsilon_i
 LINEAR_SOLVER = DirectSolver() # only used for Beam Warming scheme
 
 ################################ Solver (steady) ################################################
-CFL = 0.5
-eps_res = 10**(-7)
+CFL = 0.8
+eps_res = 10**(-6)
 files = ['output/Nozzle/rhoA.txt', 'output/Nozzle/u.txt', 'output/Nozzle/rhoEA.txt', 'output/Nozzle/pressure.txt', 'output/Nozzle/mach.txt']
 file_residual = 'output/Nozzle/residuals.txt'
 
-solver_1 = SteadySolver(10**-2, CFL, MESH, Q_1, E_1, S_1, BCS, SCHEME_1, files,file_residual,LINEAR_SOLVER, itermax=50000)
+solver_1 = SteadySolver(eps_res, CFL, MESH, Q_1, E_1, S_1, BCS, SCHEME_1, files,file_residual,LINEAR_SOLVER, itermax=50000)
 solver_2 = SteadySolver(eps_res, CFL, MESH, Q_2, E_2, S_2, BCS, SCHEME_2, files,file_residual,LINEAR_SOLVER, itermax=50000)
 solver_3 = SteadySolver(eps_res, CFL, MESH, Q_3, E_3, S_3, BCS, SCHEME_3, files,file_residual,LINEAR_SOLVER, itermax=50000)
 
+scheme = scheme3
 
 ################################ Resolution & Post-processing #############################################
 solver_3.solve()
-plot_residuals_from_file(file_residual, scheme3) # plot residuals across iterations
-plot_mach_colormap(files[4], scheme3) # Mach distribution
+plot_residuals_from_file(file_residual, scheme) # plot residuals across iterations
+plot_mach_colormap(files[4], scheme) # Mach distribution
 
-plot_all_in_one(files, xmax, scheme3)
-plot_mach(files, xmax, scheme3)
-plot_density(files, xmax, scheme3)
-plot_energy(files, xmax, scheme3)
-plot_pressure(files, xmax, scheme3)
+plot_all_in_one(files, xmax, scheme)
+plot_mach(files, xmax, scheme)
+plot_density(files, xmax, scheme)
+plot_energy(files, xmax, scheme)
+plot_pressure(files, xmax, scheme)
+
+plt.show()
 
 
 
