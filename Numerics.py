@@ -19,6 +19,18 @@ def computeJacobianMatrix(Q, i):
     A[2][2] = Qcell[1]/Qcell[0]*GAMMA #ok
     return A
 
+def computeSourceTermJacobianMatrix(Q, i, MESH): # if we use implicit source term
+    A = MESH.area[i]
+    dAdx = MESH.dAdx[i]
+    Qcell = Q.get_QCell(i)
+
+    B = np.zeros((3,3), dtype=np.float64)
+    B[1,0] = (GAMMA-1)/2*(Qcell[1]/Qcell[0])**2
+    B[1,1] = -(GAMMA-1)*(Qcell[1]/Qcell[0])
+    B[1,2] = GAMMA-1
+    B = 1/A*dAdx*B
+    return B
+
 
 class MacCormack:
     def __init__(self):
@@ -167,7 +179,7 @@ class BeamWarming:
                     deltaT = DELTA_T[i] # if steady, DELTA_T is a vector
                 else:
                     deltaT = DELTA_T # if transient, DELTA_T is a float
-
+                
                 # Get fluxes and Jacobians
                 El = E.get_FluxesCell(i-1)
                 Er = E.get_FluxesCell(i+1)
@@ -175,8 +187,14 @@ class BeamWarming:
                 Al = computeJacobianMatrix(Q, i-1)
                 Ar = computeJacobianMatrix(Q, i+1)
 
+                self.epsI = self.epsI*deltaT
+                self.epsE = self.epsE*deltaT
+                
+
                 # Get Source Term
                 Scell = S.get_SourceTermCell(i)
+                B = computeSourceTermJacobianMatrix(Q, i, MESH)
+
 
                 # Get states
                 Qcell = Q.get_QCell(i)
@@ -185,7 +203,7 @@ class BeamWarming:
 
                 if idx!= 0 and  idx!= num_inner_cells-1:
                     # Center block (diagonal)
-                    MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64)
+                    MATRIX_BM[3*idx:3*(idx+1), 3*idx:3*(idx+1)] += np.identity((3), dtype=np.float64) -deltaT*B
                     # Left block
                     MATRIX_BM[3*idx:3*(idx+1), 3*(idx-1):3*idx] += -1/(2*MESH.dx)*Al
                     # Right block
@@ -224,6 +242,9 @@ class BeamWarming:
                     # Right hand side 
                     RHS_BM_cell = -deltaT/(MESH.dx)*(Ecell-El) + deltaT*Scell
                     RHS_BM[3*idx: 3*(idx+1)] = RHS_BM_cell
+
+                self.epsI = self.epsI/deltaT
+                self.epsE = self.epsE/deltaT
 
             # Solve for deltaQ for inner cells only
             deltaQ = LINEAR_SOLVER.solve(MATRIX_BM, RHS_BM)

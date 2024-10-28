@@ -13,7 +13,7 @@ from LinearAlgebra import *
 from PostProcessing import *
 
 ################################### MESH #########################################
-Ncells = 200
+Ncells = 50
 xmin = 0 
 xmax = 10
 
@@ -51,8 +51,8 @@ S_3 = SourceTerm(MESH.num_TotCells)
 
 ################################ BoundaryConditions ####################################
 BC_LEFT = BoundaryCondition(type="SupersonicInlet")
-BC_RIGHT =  BoundaryCondition(type="SupersonicOutlet")
-# BC_RIGHT = BoundaryCondition(type="SubsonicOutlet", back_pressure=1.9*pinf, mesh=MESH)
+# BC_RIGHT =  BoundaryCondition(type="SupersonicOutlet")
+BC_RIGHT = BoundaryCondition(type="SubsonicOutlet", back_pressure=1.9*pinf, mesh=MESH)
 BCS = BoundaryConditions(BC_LEFT, BC_RIGHT)
 
 ################################ Numerical Scheme #####################################
@@ -67,7 +67,7 @@ scheme3 = r'Beam-Warming - CFL = 0.8, N = 200, $\epsilon_e = 0.125$, $\epsilon_i
 LINEAR_SOLVER = DirectSolver() # only used for Beam Warming scheme
 
 ################################ Solver (steady) ################################################
-CFL = 0.8
+CFL = 1
 eps_res = 10**(-6)
 files = ['output/Nozzle/rhoA.txt', 'output/Nozzle/u.txt', 'output/Nozzle/rhoEA.txt', 'output/Nozzle/pressure.txt', 'output/Nozzle/mach.txt']
 file_residual = 'output/Nozzle/residuals.txt'
