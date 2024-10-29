@@ -12,3 +12,8 @@ The solver supports various linear solvers:
     Classical Matrix Inversion
 
 Currently, the solver is applied to the Sod shock tube and the Quasi-1D nozzle problems.
+
+To run SOD and Nozzle cases, use the following commands from the main folder: 
+
+    - python3 CODES/SOD.py
+    - python3 CODES/Nozzle.py
